@@ -3,7 +3,12 @@
 # exit script if return code != 0
 set -e
 
-# note do NOT download build scripts - inherited from int script with envvars common defined
+### note do NOT download build scripts - inherited from int script with envvars common defined
+# download build scripts from github
+#curl --connect-timeout 5 --max-time 600 --retry 5 --retry-delay 0 --retry-max-time 60 -o /tmp/scripts-master.zip -L https://github.com/binhex/scripts/archive/master.zip
+#unzip /tmp/scripts-master.zip -d /tmp
+# move shell scripts to /root
+#mv /tmp/scripts-master/shell/arch/docker/*.sh /usr/local/bin/
 
 # detect image arch
 ####
@@ -25,18 +30,31 @@ fi
 ####
 
 # define pacman packages
-pacman_packages="base-devel privoxy"
+pacman_packages="base-devel privoxy openssl-1.0 icu"
 
 # install compiled packages using pacman
 if [[ ! -z "${pacman_packages}" ]]; then
 	pacman -S --needed $pacman_packages --noconfirm
 fi
 
+# delme - required to fix up cert issues when compiling .dot
+# custom
+####
+
+package_name="ca-certificates-mozilla.tar.zst"
+
+# download compiled libtorrent-ps (used by rtorrent-ps)
+rcurl.sh -o "/tmp/${package_name}" "https://github.com/binhex/packages/raw/master/compiled/${OS_ARCH}/${package_name}"
+
+# install libtorrent-ps
+pacman -U "/tmp/${package_name}" --noconfirm
+# /delme - required to fix up cert issues when compiling .dot
+
 # aur packages
 ####
 
 # define aur packages
-aur_packages=""
+aur_packages="jackett"
 
 # call aur install script (arch user repo)
 source aur.sh
@@ -51,7 +69,7 @@ github.sh --install-path "/tmp/compile" --github-owner "rofl0r" --github-repo "m
 ####
 
 # define comma separated list of paths 
-install_paths="/etc/privoxy,/home/nobody"
+install_paths="/etc/privoxy,/usr/lib/jackett,/home/nobody"
 
 # split comma separated string into list for install paths
 IFS=',' read -ra install_paths_list <<< "${install_paths}"
@@ -145,6 +163,9 @@ sed -i '/# ENVVARS_PLACEHOLDER/{
     r /tmp/envvars_heredoc
 }' /usr/local/bin/init.sh
 rm /tmp/envvars_heredoc
+
+# prevent removal as orphan by marking as explicitly required
+pacman -D --asexplicit icu
 
 # call cleanup script
 cleanup.sh

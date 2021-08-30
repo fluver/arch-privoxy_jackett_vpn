@@ -119,6 +119,7 @@ while true; do
 		echo "[debug] VPN IP is ${vpn_ip}"
 	fi
 
+	/usr/lib/jackett/jackett --NoRestart --NoUpdates --DataFolder /config/Jackett
 	sleep 30s
 
 done

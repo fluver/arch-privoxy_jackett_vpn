@@ -1,0 +1,27 @@
+version: "3.3"
+services:
+  jackett:
+    image: groot:staging
+    container_name: jackett
+    environment:
+      - VPN_ENABLED=yes
+      - VPN_USER=p3889984
+      - VPN_PASS=4UNX2zSYQa
+      - VPN_PROV=pia
+      - VPN_CLIENT=wireguard
+      - LAN_NETWORK=192.168.178.0/24
+      - NAME_SERVERS=209.222.18.222,209.222.18.218
+      - UMASK=000
+      - DEBUG=true
+      - ENABLE_PRIVOXY=yes
+      - ENABLE_SOCKS=yes
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    privileged: true
+    ports:
+      - 8118:8118
+      - 9117:9117
+    volumes: 
+      - ./data:/data
+      - ./config:/config
+      - /etc/localtime:/etc/localtime:ro
